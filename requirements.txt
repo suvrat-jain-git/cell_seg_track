@@ -1,0 +1,9 @@
+# CellFlow - Single Cell Tracking Pipeline
+cellpose==3.0.11
+laptrack>=0.14.0
+tifffile>=2023.1.1
+numpy>=1.24.0
+pandas>=2.0.0
+scipy>=1.10.0
+matplotlib>=3.7.0
+# GPU: install torch separately for your CUDA version - https://pytorch.org
