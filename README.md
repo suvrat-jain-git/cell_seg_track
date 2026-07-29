@@ -1,6 +1,6 @@
-# CellFlow - Single Cell Tracking Pipeline
+# Cell Segmentation and Tracking
 
-Startup-grade automated single-cell tracking for any cell culture time-lapse images.
+Automated single-cell tracking for any cell culture time-lapse images.
 Currently validated end-to-end on HemaChip HSEC microfluidic culture data (patient CB007)
 as a test case - the core engine itself is cell-type agnostic and does not assume
 HemaChip-specific biology anywhere.
@@ -25,29 +25,17 @@ core/                  Cell-type agnostic engine - works on any cell culture
                               with a nearest-centroid fallback/alternative mode.
                               Also computes each tracked cell's lifetime summary
                               (lifespan, velocity, displacement, confinement
-                              ratio, size/shape change) as a TrackRecord -
-                              this is what fills tracks.csv.
-  track_features.py           Aggregates the TrackRecords + per-frame spot
-                               counts for ONE field of view into a single
-                               PopulationRecord (mean/std lifespan, cell counts
-                               over time, arrival/departure rate) - this is
-                               what fills population.csv. Does not compute
-                               per-cell metrics itself, only averages/
-                               summarises what tracker.py already produced.
+                              ratio, size/shape change)
+  track_features.py           Per ROI level metrics (mean/std lifespan, cell counts
+                               over time, arrival/departure rate)
   viability.py                  Diameter-based viability classification -
                                  implemented but INACTIVE by default; requires
                                  a validated threshold before use (see below)
   exporter.py                    Atomic CSV writes (spots/tracks/population)
                                   + run_config.json + run_summary.json
   visualizer.py                    QC segmentation overlays (raw image next to
-                                    Cellpose outlines), track trajectory
-                                    overlays, and an at-a-glance grid flagging
-                                    zero-cell/unusually-high-density FOVs across
-                                    a batch run. Spatial heatmaps of metrics
-                                    across the chip grid live in analytics.py,
-                                    not here - an earlier, less capable
-                                    duplicate heatmap function used to exist in
-                                    this file and has been removed.
+                                    Cellpose outlines) and  track trajectory
+                                    overlays.
   analytics.py                      ROI-level analytics dashboard - one chart
                                      per PNG file (line/pie/box plots, spatial
                                      heatmaps, chip-condition comparisons),
@@ -258,8 +246,6 @@ guaranteed to stay exhaustive as flags are added.
 ## Design principles
 
 - Cell-type agnostic core - works on any cell culture; HSEC is the current test case, not the target
-- Experiment-specific logic lives entirely in `plugins/`, never in `core/` - `core/analytics.py` and `core/viability.py` check for plugin-attached fields via `hasattr()` rather than importing anything HemaChip-specific
-- All configuration typed, validated, and JSON-serialisable for reproducibility
+- Experiment-specific logic lives entirely in `plugins/`, never in `core/` 
 - Checkpointing after every FOV, with deterministic resume identity - safe for long unattended Colab runs
 - laptrack (pure Python LAP tracker) instead of TrackMate/Fiji - no Java dependency, cloud deployable; same underlying algorithm
-- Numeric thresholds and clinical feature names are only used once they've been checked against real data - e.g. `endpoint_value`/`endpoint_variability` were deliberately named to avoid implying a validated biological steady-state that an 8-hour imaging session cannot demonstrate, and the viability classifier ships inactive rather than defaulting to an unvalidated borrowed threshold
